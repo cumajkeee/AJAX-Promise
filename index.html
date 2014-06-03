@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+	<title>Page Title</title>
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+
+<script>
+	var techtalk = {
+		"date": "4\/21\/2014",
+		"title": "AJAX",
+		"lector": [
+			"alena_karaba"
+		],
+		"location": "K1\/3",
+		"description": "some description",
+		"level": "D1-D5",
+		"notes": "",
+		"attendees": [
+			"alena_karaba"
+		],
+		"tags": [
+			"ajax",
+			"xmlhttprequest",
+			"promises"
+		]
+	};
+
+	function getData (url){
+		return new Promise(function(resolve, reject){
+			var req = new XMLHttpRequest();
+			req.responseType = 'json';
+
+			req.open('GET', url);
+			req.onload = function (){
+				var status = req.status;
+				if(status >= 200 && status < 300 || status === 304){
+					resolve(req.response);
+				}else{
+					reject(Error(req.statusText));
+				}
+			};
+			req.onerror = function (){
+				reject(Error('Error'));
+			};
+			req.send();
+		})
+	}
+
+	function deleteData (url){
+		return new Promise(function(resolve, reject){
+			var req = new XMLHttpRequest();
+			req.responseType = 'json';
+
+			req.open('DELETE', url);
+			req.onload = function (){
+				var status = req.status;
+				if(status >= 200 && status < 300 || status === 304){
+					resolve(req.response);
+				}else{
+					reject(Error(req.statusText));
+				}
+			};
+			req.onerror = function (){
+				reject(Error('Error'));
+			};
+			req.send();
+		})
+	}
+
+	function putData (url, data){
+		return new Promise(function(resolve, reject){
+			var req = new XMLHttpRequest();
+			req.responseType = 'json';
+
+			req.open('PUT', url);
+			req.onload = function (){
+				var status = req.status;
+				if(status >= 200 && status < 300 || status === 304){
+					resolve(req.response);
+				}else{
+					reject(Error(req.statusText));
+				}
+			};
+			req.onerror = function (){
+				reject(Error('Error'));
+			};
+			req.setRequestHeader("Content-type","application/json");
+			delete data._id;
+			var obj = JSON.stringify(data);
+			req.send(obj);
+		})
+	}
+
+	function postData (url, data){
+		return new Promise(function(resolve, reject){
+			var req = new XMLHttpRequest();
+			req.responseType = 'json';
+
+			req.open('POST', url);
+			req.onload = function (){
+				var status = req.status;
+				if(status >= 200 && status < 300 || status === 304){
+					resolve(req.response);
+				}else{
+					reject(Error(req.statusText));
+				}
+			};
+			req.onerror = function (){
+				reject(Error('Error'));
+			};
+
+			req.setRequestHeader("Content-type","application/json");
+
+			var obj = JSON.stringify(data);
+			req.send(obj);
+		})
+	}
+
+	function doStuff (){
+		postData('http://54.72.3.96:3000/techtalks', techtalk).then(
+			function(response){
+				var dataId = response._id;
+				getData('http://54.72.3.96:3000/techtalks/'+dataId).then(
+					  function(response){
+						  var updateTechTalk = response;
+						  updateTechTalk.description = 'hell';
+						  putData('http://54.72.3.96:3000/techtalks/'+dataId, updateTechTalk).then(
+							  function(response){
+								  deleteData('http://54.72.3.96:3000/techtalks/'+dataId)
+							  }
+						  )
+					  }
+				);
+			},
+			function (reject){
+				console.log(reject);
+			}
+		)
+	}
+//	doStuff();
+
+    function getAttendee(name){
+        return getData('http://54.72.3.96:3000/attendees/'+name);
+    }
+
+    getData('http://54.72.3.96:3000/techtalks').then(
+        function(response){
+            return Promise.all(response[61].lector.map(getAttendee));
+        }
+    ).then(
+        function (lectors){
+            var fragment = document.createDocumentFragment();
+            var body = document.getElementsByTagName('body')[0];
+            lectors.forEach(function(lector){
+                var header = document.createElement('h1');
+                var span = document.createElement('span');
+                header.innerText = lector.full_name;
+                span.innerText = lector.email[0];
+                fragment.appendChild(header);
+                fragment.appendChild(span);
+            });
+            body.appendChild(fragment);
+        },
+        function(){
+            var body = document.getElementsByTagName('body')[0];
+            var header = document.createElement('h1');
+            header.innerText = 'Lectors not found';
+            body.appendChild(header);
+        }
+    )
+
+</script>
+</body>
+</html>
